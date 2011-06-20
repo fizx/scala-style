@@ -8,6 +8,16 @@ class Array
   end
 end
 
+class String
+  def package_base
+    self[/import (.+)\.(.+?)/, 1]
+  end
+  
+  def import
+    self[/import (.+)/, 1]
+  end
+end
+
 while name = STDIN.gets
   name.strip!
   if name =~ /scala$/
@@ -20,12 +30,34 @@ while name = STDIN.gets
     
     imports = lines.yoink!{|line| line =~ /^import\b/ }.sort.uniq
     
+    package_name = packages.first && packages.first[/package\s+(.*)/, 1]
+    
+    # Attempt to reify relative imports
     imports.each_with_index {|line, i| 
       unless %w[com org net].include?(line[/^import\s+(\w+)/, 1])
-        no = packages.length + javas.length + scalas.length + 3
-        STDERR.puts "\033[33mWARN: #{name}##{no}: Relative import: #{line}\033[0m"
+        no = packages.length + javas.length + scalas.length + 4 + i
+        STDERR.puts "\033[33mWARN: #{name}##{no}: Relative import: #{line.import}\033[0m"
+        imports[i] = line.gsub(/import /, "import #{package_name}.") if package_name
       end
     }
+    
+    # Attempt to roll up entries duplicated by a wildcard entry
+    wildcards = imports.select{|line| line =~ /_$/ }
+    set = wildcards.inject({}) { |hash, line|
+      hash[line.package_base] = true
+      hash
+    }
+        
+    other = imports.reject{|line| line =~ /_$/ }
+    
+    other.reject! {|line|
+      if set[line.package_base] 
+        STDERR.puts "\033[33mWARN: #{name}: #{line.import} is covered by wildcard\033[0m"
+        true
+      end
+    }
+      
+    imports = (wildcards + other).sort.uniq
     
     lines = packages + [""] + javas + [""] + scalas + [""] + imports + [""] + lines
     content = lines.join("\n")
