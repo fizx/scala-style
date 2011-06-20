@@ -1,1 +1,6 @@
-RTFSC
+Want "organize imports" and "no trailing whitespace" without IDE overhead?
+
+    :$ find src -name *.scala | ./style
+
+    # Grabs things you are about to git commit
+    :$ changed | ./style
