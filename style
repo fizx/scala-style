@@ -1,0 +1,30 @@
+#!/usr/bin/env ruby
+
+class Array
+  def yoink!(&block)
+    yoinked = select(&block)
+    reject!(&block)
+    yoinked
+  end
+end
+
+while name = STDIN.gets
+  name.strip!
+  if name =~ /scala$/
+    lines = File.open(name).map(&:chomp)
+        
+    javas = lines.yoink!{|line| line =~ /^import\s+java\b/ }.sort.uniq
+    scalas = lines.yoink!{|line| line =~ /^import\s+scala\b/ }.sort.uniq
+    
+    imports = lines.yoink!{|line| line =~ /^import\b/ }.sort.uniq
+    
+    imports.map {|i| 
+    }
+    
+    packages = lines.yoink!{|line| line =~ /^package\b/ }
+    
+    lines = packages + [""] + javas + [""] + scalas + [""] + imports + [""] + lines
+    content = lines.join("\n")
+    File.open(name, "w") {|f| f.puts content.gsub(/[ \t]+\n/, "\n").gsub(/\n{3,}/, "\n\n" ) }
+  end
+end

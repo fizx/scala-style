@@ -1,0 +1,2 @@
+#!/bin/sh
+git status -s | sed -E 's/ [A-Z]{1,2} //g'
