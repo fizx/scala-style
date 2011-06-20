@@ -12,16 +12,20 @@ while name = STDIN.gets
   name.strip!
   if name =~ /scala$/
     lines = File.open(name).map(&:chomp)
-        
+     
+
+    packages = lines.yoink!{|line| line =~ /^package\b/ }   
     javas = lines.yoink!{|line| line =~ /^import\s+java\b/ }.sort.uniq
     scalas = lines.yoink!{|line| line =~ /^import\s+scala\b/ }.sort.uniq
     
     imports = lines.yoink!{|line| line =~ /^import\b/ }.sort.uniq
     
-    imports.map {|i| 
+    imports.each_with_index {|line, i| 
+      unless %w[com org net].include?(line[/^import\s+(\w+)/, 1])
+        no = packages.length + javas.length + scalas.length + 3
+        STDERR.puts "\033[33mWARN: #{name}##{no}: Relative import: #{line}\033[0m"
+      end
     }
-    
-    packages = lines.yoink!{|line| line =~ /^package\b/ }
     
     lines = packages + [""] + javas + [""] + scalas + [""] + imports + [""] + lines
     content = lines.join("\n")
