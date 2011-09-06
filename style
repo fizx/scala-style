@@ -22,7 +22,25 @@ while name = STDIN.gets
   name.strip!
   if name =~ /scala$/
     lines = File.open(name).map(&:chomp)
-     
+
+    # preprocess multiline imports
+    prev = nil
+    pi = 0
+    lines.each_with_index do |line, i|
+      if prev =~ /^import.+\{/ && !prev.include?("}")
+        puts line.inspect
+        lines[pi] = prev + "\n" + line
+        lines[i] = nil
+        if line.include?("}")          
+          prev = line
+          pi = i
+        end
+      else
+        prev = line
+        pi = i
+      end
+    end
+    lines = lines.compact
 
     packages = lines.yoink!{|line| line =~ /^package\b/ }   
     javas = lines.yoink!{|line| line =~ /^import\s+java\b/ }.sort.uniq
